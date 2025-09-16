@@ -1,6 +1,6 @@
 export default function DesktopIcons({ projects, setOpenApp }) {
   return (
-    <div className="fixed top-0 left-0 h-full w-28 bg-black border-r border-green-500 flex flex-col items-center py-6 gap-8">
+    <div className="fixed top-0 left-0 h-full w-28 bg-transparent border-r border-green-500 flex flex-col items-center py-6 gap-8">
       {projects.map((p) => (
         <div
           key={p.id}
