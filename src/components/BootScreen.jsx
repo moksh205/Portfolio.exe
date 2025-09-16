@@ -26,16 +26,17 @@ export default function BootScreen() {
           setText("");
           setCurrentLine((prev) => prev + 1);
         }
-      }, 50); // ⚡ faster typing speed
+      }, 50); // typing speed
       return () => clearInterval(typingInterval);
     }
   }, [currentLine]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-black text-green-400 font-mono text-lg">
-      <div className="flex flex-col items-start">
+    <div className="flex items-center justify-center h-screen w-full bg-black">
+      <div className="flex flex-col items-start max-w-full px-4 sm:px-8 md:px-16 lg:px-32 text-green-400 font-mono text-base sm:text-lg md:text-xl lg:text-2xl">
+        
         {displayedLines.map((line, idx) => (
-          <p key={idx}>{line}</p>
+          <p key={idx} className="break-words">{line}</p>
         ))}
 
         {/* typing line */}
