@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import BootScreen from "./components/BootScreen";
 import Taskbar from "./components/Taskbar";
-import TerminalWindow from "./components/TerminalWindow";
 import IntroTerminal from "./components/IntroTerminal";
 import { FaFolder, FaLaptopCode, FaChartBar } from "react-icons/fa";
 
@@ -36,7 +35,7 @@ const projects = [
           <Taskbar />
 
           {/* Desktop icons */}
-          <div className="absolute top-0 bottom-12 left-0 w-28 bg-black flex flex-col items-center py-6 gap-8">
+          <div className="absolute top-0 bottom-12 left-0 w-28 bg-transparent flex flex-col items-center py-6 gap-8">
             {projects.map((p) => {
   const Icon = p.icon;
   return (

@@ -2,16 +2,15 @@ import { FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
 
 export default function Taskbar() {
   return (
-    <div className="fixed bottom-0 w-full h-12 bg-black border-t border-green-500 flex items-center justify-between px-4 sm:px-8 text-green-400 font-mono text-sm">
+    <div className="fixed bottom-0 w-full h-12 bg-black border-t flex items-center justify-between px-4 sm:px-8 text-green-400 font-mono text-sm">
       {/* Left side */}
-      <div className="flex items-center gap-2">
-        {/* Start button */}
-        <button className="flex items-center gap-2 px-3 py-1 bg-black border border-green-500 text-green-400 hover:bg-green-500 hover:text-black transition">
-          ⊞ <span className="hidden sm:inline">Start</span>
-        </button>
+     <div className="flex items-center gap-2">
+  {/* Start button */}
+  <button className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3  text-green-400 text-base sm:text-lg rounded-md hover:bg-green-400 hover:text-black transition">
+    ⊞ 
+  </button>
+</div>
 
-      
-      </div>
 
       {/* Right side social icons */}
       <div className="flex gap-6 text-xl">
