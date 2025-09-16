@@ -4,7 +4,6 @@ export default function BootScreen() {
   const lines = [
     "> Booting Moksh OS v1.0 ...",
     "> Checking system integrity ...",
-    "> Establishing secure network connection ...",
     "> Starting portfolio environment ...",
     "> Loading moksh_portfolio.exe ...",
     "> Launching desktop ...",
@@ -27,7 +26,7 @@ export default function BootScreen() {
           setText("");
           setCurrentLine((prev) => prev + 1);
         }
-      }, 40); // ⚡ faster typing speed
+      }, 50); // ⚡ faster typing speed
       return () => clearInterval(typingInterval);
     }
   }, [currentLine]);
