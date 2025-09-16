@@ -1,11 +1,42 @@
+import { FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
+
 export default function Taskbar() {
   return (
-    <div className="absolute bottom-0 w-full h-10 bg-gray-900 flex items-center justify-between text-sm px-4 text-green-400">
-      <span>🟢 Moksh OS</span>
-      <div className="flex gap-4">
-        <a href="https://github.com/yourusername" target="_blank" className="hover:text-white">GitHub</a>
-        <a href="https://linkedin.com/in/yourusername" target="_blank" className="hover:text-white">LinkedIn</a>
-        <a href="mailto:youremail@example.com" className="hover:text-white">Email</a>
+    <div className="fixed bottom-0 w-full h-12 bg-black border-t border-green-500 flex items-center justify-between px-4 sm:px-8 text-green-400 font-mono text-sm">
+      {/* Left side */}
+      <div className="flex items-center gap-2">
+        {/* Start button */}
+        <button className="flex items-center gap-2 px-3 py-1 bg-black border border-green-500 text-green-400 hover:bg-green-500 hover:text-black transition">
+          ⊞ <span className="hidden sm:inline">Start</span>
+        </button>
+
+      
+      </div>
+
+      {/* Right side social icons */}
+      <div className="flex gap-6 text-xl">
+        <a
+          href="https://github.com/yourusername"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-white transition"
+        >
+          <FaGithub />
+        </a>
+        <a
+          href="https://linkedin.com/in/yourusername"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-white transition"
+        >
+          <FaLinkedin />
+        </a>
+        <a
+          href="mailto:youremail@example.com"
+          className="hover:text-white transition"
+        >
+          <FaEnvelope />
+        </a>
       </div>
     </div>
   );
