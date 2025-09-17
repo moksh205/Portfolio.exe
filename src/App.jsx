@@ -11,10 +11,9 @@ export default function App() {
   const [booting, setBooting] = useState(true);
   const [desktop, setDesktop] = useState(false);
   const [openFolders, setOpenFolders] = useState([]);
-  const [openTerminals, setOpenTerminals] = useState([]);
+  const [terminalOpen, setTerminalOpen] = useState(false); // single terminal
   const [zCounter, setZCounter] = useState(30);
 
-  // Boot screen timer
   useEffect(() => {
     const timer = setTimeout(() => {
       setBooting(false);
@@ -23,32 +22,20 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Bring folder or terminal to front
   const bringToFront = (instanceId, type = "folder") => {
-    if (type === "folder") {
-      setZCounter((prev) => {
-        const newZ = prev + 1;
+    setZCounter((prev) => {
+      const newZ = prev + 1;
+      if (type === "folder") {
         setOpenFolders((prevFolders) =>
           prevFolders.map((f) =>
             f.instanceId === instanceId ? { ...f, zIndex: newZ } : f
           )
         );
-        return newZ;
-      });
-    } else if (type === "terminal") {
-      setZCounter((prev) => {
-        const newZ = prev + 1;
-        setOpenTerminals((prevTerms) =>
-          prevTerms.map((t) =>
-            t.instanceId === instanceId ? { ...t, zIndex: newZ } : t
-          )
-        );
-        return newZ;
-      });
-    }
+      }
+      return newZ;
+    });
   };
 
-  // Open folder
   const openFolder = (folder) => {
     const existing = openFolders.find((f) => f.id === folder.id);
     if (existing) {
@@ -63,33 +50,23 @@ export default function App() {
     setZCounter((prev) => prev + 1);
   };
 
-  // Close folder
   const closeFolder = (instanceId) => {
     setOpenFolders((prev) => prev.filter((f) => f.instanceId !== instanceId));
   };
 
-  // Open terminal
+  // Only one terminal
   const openTerminal = () => {
-    const instanceId = Date.now();
-    setOpenTerminals((prev) => [
-      ...prev,
-      { instanceId, zIndex: zCounter + 1 },
-    ]);
-    setZCounter((prev) => prev + 1);
+    if (!terminalOpen) setTerminalOpen(true);
   };
+  const closeTerminal = () => setTerminalOpen(false);
 
-  // Close terminal
-  const closeTerminal = (instanceId) => {
-    setOpenTerminals((prev) => prev.filter((t) => t.instanceId !== instanceId));
-  };
-
-  // Open folder from terminal command
+  // Open folder by terminal command
   const openFolderByName = (name) => {
     const folder = projects.find(
       (f) => f.name.toLowerCase() === name.toLowerCase()
     );
     if (folder) openFolder(folder);
-    return folder ? true : false;
+    return !!folder;
   };
 
   return (
@@ -112,21 +89,17 @@ export default function App() {
             />
           ))}
 
-          {/* Terminal Windows */}
-          {openTerminals.map((term) => (
+          {/* Terminal Window (single) */}
+          {terminalOpen && (
             <TerminalWindow
-              key={term.instanceId}
-              zIndex={term.zIndex}
-              onClose={() => closeTerminal(term.instanceId)}
-              bringToFront={() => bringToFront(term.instanceId, "terminal")}
-              openFolder={openFolderByName} // Pass folder opener
+              zIndex={zCounter + 1}
+              onClose={closeTerminal}
+              openFolder={openFolderByName}
             />
-          ))}
-
-          {/* Show intro terminal only if no folders or terminals */}
-          {openFolders.length === 0 && openTerminals.length === 0 && (
-            <IntroTerminal />
           )}
+
+          {/* Show intro terminal only if no folders and terminal is closed */}
+          {openFolders.length === 0 && !terminalOpen && <IntroTerminal />}
         </div>
       )}
     </div>

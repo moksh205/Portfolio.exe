@@ -5,6 +5,7 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
   const [selected, setSelected] = useState(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // for smooth open
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef(null);
   const initialized = useRef(false);
@@ -22,7 +23,6 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
       const width = rect?.width || 600;
       const height = rect?.height || 400;
 
-      // Mobile adjustment: slightly top on small screens
       const topPosition = winWidth < 640 
         ? (winHeight - height) / 4   // slightly top for mobile
         : (winHeight - height) / 2;  // center for desktop
@@ -31,7 +31,11 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
         x: (winWidth - width) / 2,
         y: topPosition,
       });
+
       initialized.current = true;
+
+      // show with transition
+      setTimeout(() => setIsVisible(true), 50);
     }
   }, [folder]);
 
@@ -73,12 +77,16 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
   if (!folder) return null;
 
   return (
-    <div
-      ref={windowRef}
-      onMouseDown={handleMouseDown}
-      style={{ top: position.y, left: position.x, zIndex }}
-      className="absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-neutral-900 border-2 border-green-700 shadow-lg font-mono text-green-300 rounded cursor-pointer select-none"
-    >
+   <div
+  ref={windowRef}
+  onMouseDown={handleMouseDown}
+  style={{ top: position.y, left: position.x, zIndex }}
+  className={`absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-neutral-900 border-2 border-green-700 shadow-lg font-mono text-green-300 rounded cursor-pointer select-none
+    transition-opacity transition-transform duration-300 ease-in-out
+    ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"}
+  `}
+>
+
       {/* Title bar */}
       <div className="flex items-center justify-between px-3 py-1 bg-neutral-800 border-b border-green-700 rounded-t">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -90,7 +98,9 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onClose();
+            // smooth close
+            setIsVisible(false);
+            setTimeout(onClose, 300); // wait for transition
           }}
           className="w-6 h-6 flex items-center justify-center bg-neutral-800 border border-green-700 text-green-300 hover:bg-neutral-700 rounded"
         >
@@ -100,12 +110,13 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
 
       {/* Folder Content */}
       {folder.name === "Projects" ? (
-        <div className="p-3 max-h-64 overflow-auto">
-          <GitHubProjects />
-        </div>
+       <div className="p-3 max-h-64 overflow-auto hide-scrollbar">
+  <GitHubProjects />
+</div>
+
       ) : (
-        <div className="p-3 grid grid-cols-2 sm:grid-cols-2 gap-3 max-h-64 overflow-auto">
-          {folder.children?.map((child) => (
+        <div className="p-3 grid grid-cols-2 sm:grid-cols-2 gap-3 max-h-64 overflow-auto hide-scrollbar">
+  {folder.children?.map((child) => (
             <div
               key={child.id}
               onClick={(e) => {
@@ -126,11 +137,11 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
       )}
 
       {/* Selected details */}
-      {selected?.desc && (
+      {/* {selected?.desc && (
         <div className="p-3 border-t border-green-700 text-sm sm:text-base">
           <p>{selected.desc}</p>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

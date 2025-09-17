@@ -138,7 +138,7 @@ useEffect(() => {
   <img
     src={MokshImg}
     alt="Moksh"
-    className="w-30 h-30 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full flex-shrink-0"
+    className="w-36 h-36 sm:w-32 sm:h-32 md:w-44 md:h-44 rounded-full flex-shrink-0"
   />
 </div>
 

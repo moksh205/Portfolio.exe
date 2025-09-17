@@ -1,20 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 
 export default function TerminalWindow({ onClose, zIndex, openFolder }) {
-  const [lines, setLines] = useState([
-    "Welcome to Moksh's terminal. Type 'help' for commands.",
-  ]);
+  const [lines, setLines] = useState(["Type 'help' to see available commands."]);
   const [input, setInput] = useState("");
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // for transition
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef(null);
   const initialized = useRef(false);
 
-  // Valid folder commands
   const folders = ["projects", "skills", "experience"];
 
-  // Center the terminal on load
+  // Center terminal on load
   useEffect(() => {
     if (!initialized.current) {
       const winWidth = window.innerWidth;
@@ -28,6 +26,9 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
         y: (winHeight - height) / 2,
       });
       initialized.current = true;
+
+      // Fade-in after mounting
+      setTimeout(() => setIsVisible(true), 10);
     }
   }, []);
 
@@ -46,7 +47,6 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
     });
   };
   const handleMouseUp = () => setIsDragging(false);
-
   useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
@@ -61,7 +61,7 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
     };
   }, [isDragging]);
 
-  // Command handler
+  // Commands
   const handleCommand = (cmd) => {
     const cleanCmd = cmd.trim().toLowerCase();
     setLines((prev) => [...prev, `$ ${cmd}`]);
@@ -87,11 +87,11 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
           const folderName = cleanCmd.replace("open ", "").trim();
           if (folders.includes(folderName)) {
             setLines((prev) => [...prev, `Accessing folder: ${folderName}...`]);
-            openFolder && openFolder(folderName); // call App to open folder
+            openFolder && openFolder(folderName);
           } else {
             setLines((prev) => [
               ...prev,
-              `Access denied or folder not found: ${folderName}`,
+              `Folder not found or access denied: ${folderName}`,
             ]);
           }
         } else {
@@ -107,11 +107,19 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
     }
   };
 
+  // Close with transition
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => onClose && onClose(), 300); // match transition duration
+  };
+
   return (
     <div
       ref={windowRef}
       style={{ top: position.y, left: position.x, zIndex }}
-      className="absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-black border-2 border-green-700 shadow-lg font-mono text-green-300 rounded select-none"
+      className={`absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-black border-2 border-green-700 shadow-lg font-mono text-green-300 rounded select-none transform transition-all duration-300 ${
+        isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+      }`}
     >
       {/* Title Bar */}
       <div
@@ -124,7 +132,7 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onClose && onClose();
+            handleClose();
           }}
           className="w-6 h-6 flex items-center justify-center bg-neutral-800 border border-green-700 text-green-300 hover:bg-neutral-700 rounded"
         >
@@ -154,7 +162,6 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
         </div>
       </div>
 
-      {/* Blinking cursor style */}
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 0; }
@@ -167,4 +174,3 @@ export default function TerminalWindow({ onClose, zIndex, openFolder }) {
     </div>
   );
 }
-

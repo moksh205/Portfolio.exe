@@ -1,7 +1,18 @@
 @import "tailwindcss";
 body {
   background-color: #000;
-  /* font-family: "Fira Code", monospace; */
+
   font-family: "Press Start 2P", monospace;
   overflow: hidden;
 }
+
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;            
+}
+
+
