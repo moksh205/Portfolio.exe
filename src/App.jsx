@@ -19,7 +19,7 @@ export default function App() {
     const timer = setTimeout(() => {
       setBooting(false);
       setDesktop(true);
-    }, 4000);
+    }, 9000);
     return () => clearTimeout(timer);
   }, []);
 
