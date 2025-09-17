@@ -5,21 +5,26 @@ export default function GitHubProjects() {
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchRepos = async () => {
-      try {
-        const res = await fetch("https://api.github.com/users/moksh205/repos");
-        const data = await res.json();
-        setRepos(data);
-      } catch (error) {
-        console.error("Error fetching GitHub repos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+ useEffect(() => {
+  const fetchRepos = async () => {
+    try {
+      const res = await fetch("https://api.github.com/users/moksh205/repos");
+      let data = await res.json();
 
-    fetchRepos();
-  }, []);
+      // Sort by latest updated first
+      data.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+      setRepos(data);
+    } catch (error) {
+      console.error("Error fetching GitHub repos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchRepos();
+}, []);
+
 
   if (loading) return <p className="text-green-300 text-sm">Loading GitHub projects…</p>;
   if (!repos.length) return <p className="text-green-300 text-sm">No GitHub projects found.</p>;
