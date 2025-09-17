@@ -137,11 +137,11 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
       )}
 
       {/* Selected details */}
-      {/* {selected?.desc && (
+       {selected?.desc && (
         <div className="p-3 border-t border-green-700 text-sm sm:text-base">
           <p>{selected.desc}</p>
         </div>
-      )} */}
+      )} 
     </div>
   );
 }
