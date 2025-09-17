@@ -41,22 +41,26 @@ export default function IntroTerminal({ onClose, zIndex }) {
     }
   }, [currentCharIndex, currentLineIndex, displayedLines, lines]);
 
-  // Center the window initially
-  useEffect(() => {
-    if (!initialized.current) {
-      const winWidth = window.innerWidth;
-      const winHeight = window.innerHeight;
-      const rect = windowRef.current?.getBoundingClientRect();
-      const width = rect?.width || 600;
-      const height = rect?.height || 300;
+// Center the window initially with phone adjustment
+useEffect(() => {
+  if (!initialized.current) {
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+    const rect = windowRef.current?.getBoundingClientRect();
+    const width = rect?.width || 600;
+    const height = rect?.height || 300;
 
-      setPosition({
-        x: (winWidth - width) / 2,
-        y: (winHeight - height) / 2,
-      });
-      initialized.current = true;
-    }
-  }, []);
+    const topPosition = winWidth < 640 // mobile breakpoint
+      ? (winHeight - height) / 4   // slightly top for phone
+      : (winHeight - height) / 2; // center for desktop
+
+    setPosition({
+      x: (winWidth - width) / 2,
+      y: topPosition,
+    });
+    initialized.current = true;
+  }
+}, []);
 
   // Drag handlers
   const handleMouseDown = (e) => {
