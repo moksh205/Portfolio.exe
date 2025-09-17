@@ -120,27 +120,28 @@ useEffect(() => {
       </div>
 
       {/* Terminal content */}
-      <div className="p-4 overflow-auto max-h-80 sm:max-h-96 flex gap-3 items-start">
-        {/* Text area */}
-        <div className="space-y-2 font-mono text-green-300 text-sm sm:text-base leading-relaxed flex-1">
-          {displayedLines.map((line, idx) => (
-            <p key={idx} className="break-words">
-              {line}
-            </p>
-          ))}
-          {/* Blinking cursor */}
-          {currentLineIndex <= lines.length && (
-            <span className="font-bold animate-blink">|</span>
-          )}
-        </div>
+<div className="p-4 overflow-auto max-h-80 sm:max-h-96 flex gap-3 items-center">
+  {/* Text area */}
+  <div className="space-y-2 font-mono text-green-300 text-sm sm:text-base leading-relaxed flex-1">
+    {displayedLines.map((line, idx) => (
+      <p key={idx} className="break-words">
+        {line}
+      </p>
+    ))}
+    {/* Blinking cursor */}
+    {currentLineIndex <= lines.length && (
+      <span className="font-bold animate-blink">|</span>
+    )}
+  </div>
 
-        {/* Right image */}
-        <img
-          src={MokshImg}
-          alt="Moksh"
-          className="w-24 h-24 sm:w-42 sm:h-42 rounded-full flex-shrink-0"
-        />
-      </div>
+  {/* Right image */}
+  <img
+    src={MokshImg}
+    alt="Moksh"
+    className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full flex-shrink-0"
+  />
+</div>
+
 
       {/* Blinking cursor style */}
       <style>{`

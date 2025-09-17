@@ -22,9 +22,14 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
       const width = rect?.width || 600;
       const height = rect?.height || 400;
 
+      // Mobile adjustment: slightly top on small screens
+      const topPosition = winWidth < 640 
+        ? (winHeight - height) / 4   // slightly top for mobile
+        : (winHeight - height) / 2;  // center for desktop
+
       setPosition({
         x: (winWidth - width) / 2,
-        y: (winHeight - height) / 2,
+        y: topPosition,
       });
       initialized.current = true;
     }
@@ -70,7 +75,7 @@ export default function FolderWindow({ folder, onClose, zIndex }) {
   return (
     <div
       ref={windowRef}
-      onMouseDown={handleMouseDown} 
+      onMouseDown={handleMouseDown}
       style={{ top: position.y, left: position.x, zIndex }}
       className="absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-neutral-900 border-2 border-green-700 shadow-lg font-mono text-green-300 rounded cursor-pointer select-none"
     >
