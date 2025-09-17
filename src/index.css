@@ -1,5 +1,6 @@
 @import "tailwindcss";
 body {
   background-color: #000;
-  font-family: "Fira Code", monospace;
+  /* font-family: "Fira Code", monospace; */
+  font-family: "Press Start 2P", monospace;
 }

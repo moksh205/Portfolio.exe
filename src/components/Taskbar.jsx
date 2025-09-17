@@ -1,21 +1,29 @@
 import { FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
+import { MdOutlineWindow, MdOutlineTerminal } from "react-icons/md";
 
-export default function Taskbar() {
+export default function Taskbar({ openTerminal }) {
   return (
-    <div className="fixed bottom-0 w-full h-12 bg-black border-t flex items-center justify-between px-4 sm:px-8 text-green-400 font-mono text-sm">
+    <div className="fixed bottom-0 w-full h-10 bg-neutral-900 border-t border-green-700 flex items-center justify-between px-3 text-green-400 font-mono text-sm">
       {/* Left side */}
-     <div className="flex items-center gap-2">
-  {/* Start button */}
-  <button className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3  text-green-400 text-base sm:text-lg rounded-md hover:bg-green-400 hover:text-black transition">
-    ⊞ 
-  </button>
-</div>
+      <div className="flex items-center gap-3">
+        {/* Start button */}
+        <button className="flex items-center gap-1 px-2 py-1 border border-green-400 rounded-sm hover:bg-green-400 hover:text-black transition font-bold tracking-wider">
+          <MdOutlineWindow className="text-lg" /> 
+        </button>
 
+        {/* Terminal icon */}
+        <button
+          onClick={openTerminal} // <-- call the function here
+          className="px-2 py-1 border border-green-400 rounded-sm hover:bg-green-400 hover:text-black transition"
+        >
+          <MdOutlineTerminal className="text-lg" />
+        </button>
+      </div>
 
       {/* Right side social icons */}
-      <div className="flex gap-6 text-xl">
+      <div className="flex gap-5 text-lg">
         <a
-          href="https://github.com/yourusername"
+          href="https://github.com/moksh205"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-white transition"
@@ -23,7 +31,7 @@ export default function Taskbar() {
           <FaGithub />
         </a>
         <a
-          href="https://linkedin.com/in/yourusername"
+          href="https://linkedin.com/in/moksh-gupta-9aa579287"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-white transition"
@@ -31,7 +39,7 @@ export default function Taskbar() {
           <FaLinkedin />
         </a>
         <a
-          href="mailto:youremail@example.com"
+          href="mailto:mokshgupta810@gmail.com"
           className="hover:text-white transition"
         >
           <FaEnvelope />

@@ -1,19 +1,16 @@
 export default function DesktopIcons({ projects, setOpenApp }) {
   return (
-    <div className="fixed top-0 left-0 h-full w-28 bg-transparent border-r border-green-500 flex flex-col items-center py-6 gap-8">
+    <div className="absolute top-0 left-0 bottom-12 w-full sm:w-auto h-28 sm:h-auto flex flex-row sm:flex-col items-center sm:justify-start gap-4 sm:gap-8 px-2 py-2 sm:py-6 z-50 pointer-events-auto overflow-auto">
       {projects.map((p) => (
         <div
           key={p.id}
           className="flex flex-col items-center cursor-pointer group"
           onClick={() => setOpenApp(p)}
         >
-          {/* Icon */}
-          <div className="w-12 h-12 bg-gray-900 border border-green-500 rounded flex items-center justify-center text-green-400 text-xl group-hover:bg-green-500 group-hover:text-black transition">
-            {p.icon || "📁"}
+          <div className="text-green-400 text-3xl group-hover:text-white transition drop-shadow-[0_0_6px_#00ff00]">
+            <p.icon />
           </div>
-
-          {/* Label */}
-          <span className="mt-2 text-xs text-green-400 group-hover:text-white text-center px-2">
+          <span className="mt-1 text-xs text-green-400 group-hover:text-white text-center leading-tight">
             {p.name}
           </span>
         </div>

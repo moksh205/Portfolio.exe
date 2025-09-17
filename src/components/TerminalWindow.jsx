@@ -1,54 +1,27 @@
-import { useState, useEffect, useRef } from "react";
-import MokshImg from "../assets/moksh.png"; // update path if needed
+import { useState, useRef, useEffect } from "react";
 
-export default function IntroTerminal({ onClose, zIndex }) {
-  const lines = [
-    "whoami",
-    "Hi, I'm Moksh Gupta",
-    "Cybersecurity Enthusiast | Developer",
-    "Select an icon to explore projects",
-    "Press Any Key to Continue...",
-  ];
-
-  const [displayedLines, setDisplayedLines] = useState([]);
-  const [currentLineIndex, setCurrentLineIndex] = useState(0);
-  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+export default function TerminalWindow({ onClose, zIndex, openFolder }) {
+  const [lines, setLines] = useState([
+    "Welcome to Moksh's terminal. Type 'help' for commands.",
+  ]);
+  const [input, setInput] = useState("");
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef(null);
   const initialized = useRef(false);
 
-  // Typing effect
-  useEffect(() => {
-    if (currentLineIndex < lines.length) {
-      const timeout = setTimeout(() => {
-        const currentLine = displayedLines[currentLineIndex] || "";
-        const updatedLine =
-          currentLine + lines[currentLineIndex][currentCharIndex];
-        const updatedLines = [...displayedLines];
-        updatedLines[currentLineIndex] = updatedLine;
-        setDisplayedLines(updatedLines);
+  // Valid folder commands
+  const folders = ["projects", "skills", "experience"];
 
-        if (currentCharIndex < lines[currentLineIndex].length - 1) {
-          setCurrentCharIndex(currentCharIndex + 1);
-        } else {
-          setCurrentLineIndex(currentLineIndex + 1);
-          setCurrentCharIndex(0);
-        }
-      }, 40);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentCharIndex, currentLineIndex, displayedLines, lines]);
-
-  // Center the window initially
+  // Center the terminal on load
   useEffect(() => {
     if (!initialized.current) {
       const winWidth = window.innerWidth;
       const winHeight = window.innerHeight;
       const rect = windowRef.current?.getBoundingClientRect();
       const width = rect?.width || 600;
-      const height = rect?.height || 300;
+      const height = rect?.height || 400;
 
       setPosition({
         x: (winWidth - width) / 2,
@@ -62,10 +35,7 @@ export default function IntroTerminal({ onClose, zIndex }) {
   const handleMouseDown = (e) => {
     setIsDragging(true);
     const rect = windowRef.current.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     e.preventDefault();
   };
   const handleMouseMove = (e) => {
@@ -76,6 +46,7 @@ export default function IntroTerminal({ onClose, zIndex }) {
     });
   };
   const handleMouseUp = () => setIsDragging(false);
+
   useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
@@ -90,13 +61,59 @@ export default function IntroTerminal({ onClose, zIndex }) {
     };
   }, [isDragging]);
 
+  // Command handler
+  const handleCommand = (cmd) => {
+    const cleanCmd = cmd.trim().toLowerCase();
+    setLines((prev) => [...prev, `$ ${cmd}`]);
+
+    switch (cleanCmd) {
+      case "help":
+        setLines((prev) => [
+          ...prev,
+          "Available commands: whoami, help, clear, ls, open [folder]",
+        ]);
+        break;
+      case "whoami":
+        setLines((prev) => [...prev, "Moksh Gupta"]);
+        break;
+      case "clear":
+        setLines([]);
+        break;
+      case "ls":
+        setLines((prev) => [...prev, folders.join("  ")]);
+        break;
+      default:
+        if (cleanCmd.startsWith("open ")) {
+          const folderName = cleanCmd.replace("open ", "").trim();
+          if (folders.includes(folderName)) {
+            setLines((prev) => [...prev, `Accessing folder: ${folderName}...`]);
+            openFolder && openFolder(folderName); // call App to open folder
+          } else {
+            setLines((prev) => [
+              ...prev,
+              `Access denied or folder not found: ${folderName}`,
+            ]);
+          }
+        } else {
+          setLines((prev) => [...prev, `Command not found: ${cmd}`]);
+        }
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleCommand(input);
+      setInput("");
+    }
+  };
+
   return (
     <div
       ref={windowRef}
       style={{ top: position.y, left: position.x, zIndex }}
-      className="absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-black border-2 border-green-700 shadow-lg font-mono text-green-300 rounded select-none mx-auto"
+      className="absolute w-[90%] max-w-md sm:max-w-lg md:max-w-xl bg-black border-2 border-green-700 shadow-lg font-mono text-green-300 rounded select-none"
     >
-      {/* Title bar */}
+      {/* Title Bar */}
       <div
         onMouseDown={handleMouseDown}
         className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-green-700 rounded-t-lg cursor-pointer select-none"
@@ -115,27 +132,26 @@ export default function IntroTerminal({ onClose, zIndex }) {
         </button>
       </div>
 
-      {/* Terminal content */}
-      <div className="p-4 overflow-auto max-h-80 sm:max-h-96 flex gap-3 items-start">
-        {/* Text area */}
-        <div className="space-y-2 font-mono text-green-300 text-sm sm:text-base leading-relaxed flex-1">
-          {displayedLines.map((line, idx) => (
+      {/* Terminal Content */}
+      <div className="p-4 h-64 overflow-auto flex flex-col">
+        <div className="flex-1 space-y-1">
+          {lines.map((line, idx) => (
             <p key={idx} className="break-words">
               {line}
             </p>
           ))}
-          {/* Blinking cursor */}
-          {currentLineIndex <= lines.length && (
-            <span className="font-bold animate-blink">|</span>
-          )}
+          <span className="animate-blink font-bold">$</span>
         </div>
-
-        {/* Right image */}
-        <img
-          src={MokshImg}
-          alt="Moksh"
-          className="w-24 h-24 sm:w-42 sm:h-42 rounded-full flex-shrink-0"
-        />
+        <div className="flex mt-1">
+          <span className="mr-2">$</span>
+          <input
+            autoFocus
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="bg-black focus:outline-none flex-1 text-green-300"
+          />
+        </div>
       </div>
 
       {/* Blinking cursor style */}
@@ -151,3 +167,4 @@ export default function IntroTerminal({ onClose, zIndex }) {
     </div>
   );
 }
+
