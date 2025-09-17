@@ -1,7 +1,7 @@
 @import "tailwindcss";
 body {
   background-color: #000;
-
+  user-select: none;
   font-family: "Press Start 2P", monospace;
   overflow: hidden;
 }
