@@ -31,7 +31,7 @@ export default function Taskbar({ openTerminal }) {
           <FaGithub />
         </a>
         <a
-          href="https://www.linkedin.com/in/moksh-gupta-9aa579287"
+          href="https://in.linkedin.com/in/moksh-guptaa-9aa579287"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-white transition"
