@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaGithub, FaStar, FaCodeBranch, FaSearch, FaExternalLinkAlt } from "react-icons/fa";
+import { FaGithub, FaStar, FaCodeBranch, FaSearch, FaExternalLinkAlt, FaGlobe } from "react-icons/fa";
 import { profile } from "../../data/projectsData";
 
-const CACHE_KEY = "gh-repos-v2";
+const CACHE_KEY = "gh-repos-v3";
 const CACHE_MS = 30 * 60 * 1000; // GitHub allows 60 unauthenticated calls/hour
 
 const LANG_COLORS = {
@@ -19,6 +19,16 @@ function readCache() {
   }
   return null;
 }
+
+// The deployed site for a repo: its "website" field on GitHub, or its GitHub Pages URL
+function liveUrl(r) {
+  const home = (r.homepage || "").trim();
+  if (home) return /^https?:\/\//.test(home) ? home : `https://${home}`;
+  if (r.has_pages) return `https://${profile.githubUser.toLowerCase()}.github.io/${r.name}/`;
+  return null;
+}
+
+const prettyHost = (url) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 function ago(date) {
   const days = Math.floor((Date.now() - new Date(date)) / 86400000);
@@ -43,8 +53,10 @@ function useRepos() {
         const list = data
           .filter((r) => !r.fork)
           .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
-          .map(({ id, name, description, language, stargazers_count, forks_count, html_url, homepage, pushed_at }) => ({
-            id, name, description, language, stargazers_count, forks_count, html_url, homepage, pushed_at,
+          .map((r) => ({
+            id: r.id, name: r.name, description: r.description, language: r.language,
+            stargazers_count: r.stargazers_count, forks_count: r.forks_count,
+            html_url: r.html_url, pushed_at: r.pushed_at, live: liveUrl(r),
           }));
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), repos: list }));
@@ -65,16 +77,20 @@ export default function ProjectsSection() {
   const { repos, error } = useRepos();
   const [query, setQuery] = useState("");
   const [lang, setLang] = useState("All");
+  const [liveOnly, setLiveOnly] = useState(true);
 
-  const langs = useMemo(() => ["All", ...new Set((repos ?? []).map((r) => r.language).filter(Boolean))], [repos]);
+  const liveCount = useMemo(() => (repos ?? []).filter((r) => r.live).length, [repos]);
+  const onlyLive = liveOnly && liveCount > 0; // fall back to all repos if none are deployed
+  const pool = useMemo(() => (repos ?? []).filter((r) => !onlyLive || r.live), [repos, onlyLive]);
+  const langs = useMemo(() => ["All", ...new Set(pool.map((r) => r.language).filter(Boolean))], [pool]);
   const shown = useMemo(
     () =>
-      (repos ?? []).filter(
+      pool.filter(
         (r) =>
           (lang === "All" || r.language === lang) &&
           (r.name + " " + (r.description ?? "")).toLowerCase().includes(query.trim().toLowerCase())
       ),
-    [repos, lang, query]
+    [pool, lang, query]
   );
 
   if (error) {
@@ -93,6 +109,29 @@ export default function ProjectsSection() {
     <div className="space-y-4">
       {/* toolbar */}
       <div className="flex flex-col gap-2.5">
+        {liveCount > 0 && (
+          <div role="tablist" aria-label="Which projects" className="grid grid-cols-2 p-1 rounded-xl bg-stone-100 text-sm">
+            {[
+              [true, <><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live sites ({liveCount})</>],
+              [false, <><FaGithub /> All repos ({repos.length})</>],
+            ].map(([val, label]) => (
+              <button
+                key={String(val)}
+                role="tab"
+                aria-selected={liveOnly === val}
+                onClick={() => {
+                  setLiveOnly(val);
+                  setLang("All");
+                }}
+                className={`h-9 rounded-lg inline-flex items-center justify-center gap-2 transition ${
+                  liveOnly === val ? "bg-white text-stone-900 font-medium shadow-sm" : "text-stone-500 hover:text-stone-800"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         <label className="relative flex-1">
           <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
           <input
@@ -129,24 +168,25 @@ export default function ProjectsSection() {
       ) : (
         <div className="grid sm:grid-cols-2 gap-3">
           {shown.map((r) => (
-            <a
+            <div
               key={r.id}
-              href={r.html_url}
-              target="_blank"
-              rel="noopener noreferrer"
               className="spot group flex flex-col gap-2 p-4 rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-lg hover:-translate-y-0.5 transition"
             >
               <div className="flex items-start gap-2">
                 <span className="grid place-items-center w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
-                  <FaGithub />
+                  {r.live ? <FaGlobe /> : <FaGithub />}
                 </span>
                 <h4 className="font-semibold text-slate-900 leading-tight break-all pt-1.5">{r.name}</h4>
-                <FaExternalLinkAlt className="ml-auto mt-2 text-xs text-slate-300 group-hover:text-emerald-500 shrink-0" />
+                {r.live && (
+                  <span className="ml-auto mt-1 inline-flex items-center gap-1 h-5 px-2 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Live
+                  </span>
+                )}
               </div>
               <p className={`text-sm leading-snug line-clamp-2 min-h-[2lh] ${r.description ? "text-slate-600" : "text-slate-400 italic"}`}>
                 {r.description || "No description yet"}
               </p>
-              <div className="flex items-center gap-3 text-xs text-slate-500 mt-auto">
+              <div className="flex items-center gap-3 text-xs text-slate-500">
                 {r.language && (
                   <span className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: LANG_COLORS[r.language] || "#94a3b8" }} />
@@ -157,7 +197,29 @@ export default function ProjectsSection() {
                 <span className="flex items-center gap-1"><FaCodeBranch /> {r.forks_count}</span>
                 <span className="ml-auto">{ago(r.pushed_at)}</span>
               </div>
-            </a>
+              <div className="flex gap-2 mt-auto pt-1">
+                {r.live && (
+                  <a
+                    href={r.live}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={prettyHost(r.live)}
+                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-emerald-600 transition"
+                  >
+                    Visit site <FaExternalLinkAlt className="text-[10px]" />
+                  </a>
+                )}
+                <a
+                  href={r.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${r.name} code on GitHub`}
+                  className={`inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-stone-200 text-stone-700 text-xs font-medium hover:border-stone-900 transition ${r.live ? "" : "flex-1"}`}
+                >
+                  <FaGithub /> Code
+                </a>
+              </div>
+            </div>
           ))}
         </div>
       )}

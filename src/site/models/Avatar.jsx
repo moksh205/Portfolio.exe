@@ -22,25 +22,54 @@ const CURLS = [
   [-0.4, 1.86, -0.32], [-0.43, 1.8, 0.05], [0.43, 1.8, 0.08],
 ];
 
-// Chibi 3D mini-Moksh. `pose`: "wave" | "type" | "idle".
+// Chibi 3D mini-Moksh. `pose`: "wave" | "type" | "idle" | "walk".
 // `mouse` is a ref with { x, y } in -1..1 so the head can follow the cursor.
-export default function Avatar({ pose = "idle", mouse, ...props }) {
+// `motion` (optional) is a ref with { speed } in units/s — drives the walk cycle.
+export default function Avatar({ pose = "idle", mouse, motion, ...props }) {
   const body = useRef();
   const head = useRef();
   const armL = useRef();
   const armR = useRef();
+  const legL = useRef();
+  const legR = useRef();
   const eyes = useRef();
   const blinkAt = useRef(2);
+  const stride = useRef(0);
   const shirt = useMemo(() => shirtTexture(), []);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
-    // little happy hop every ~4 s when waving
-    const phase = t % 4;
-    const hop = pose === "wave" && phase < 0.5 ? Math.sin((phase / 0.5) * Math.PI) * 0.35 : 0;
-    body.current.position.y = Math.sin(t * 2) * 0.02 + hop;
+    const speed = motion?.current.speed ?? 0;
+    const walking = pose === "walk" || speed > 0.15;
+    const k = Math.min(1, dt * 4);
 
-    if (pose === "wave") {
+    if (walking) {
+      // legs/arms swing in step with how fast he actually moves
+      stride.current += dt * Math.min(14, 3 + speed * 2.4);
+      const s = Math.sin(stride.current);
+      legL.current.rotation.x = s * 0.65;
+      legR.current.rotation.x = -s * 0.65;
+      armL.current.rotation.x = -s * 0.75;
+      armR.current.rotation.x = s * 0.75;
+      armL.current.rotation.z = -0.08;
+      armR.current.rotation.z = 0.08;
+      body.current.position.y = Math.abs(Math.cos(stride.current)) * 0.07;
+    } else {
+      // ease the legs back together
+      legL.current.rotation.x *= Math.max(0, 1 - k * 2);
+      legR.current.rotation.x *= Math.max(0, 1 - k * 2);
+      armL.current.rotation.x *= Math.max(0, 1 - k * 2);
+      armR.current.rotation.x *= Math.max(0, 1 - k * 2);
+      // little happy hop every ~4 s when waving
+      const phase = t % 4;
+      const hop = pose === "wave" && phase < 0.5 ? Math.sin((phase / 0.5) * Math.PI) * 0.35 : 0;
+      body.current.position.y = Math.sin(t * 2) * 0.02 + hop;
+    }
+
+    // arm poses (only while standing still)
+    if (walking) {
+      /* arms already swinging */
+    } else if (pose === "wave") {
       armR.current.rotation.z = 2.5 + Math.sin(t * 7) * 0.35; // raised, waving
       armR.current.rotation.x = 0;
       armL.current.rotation.z = -0.08;
@@ -58,7 +87,6 @@ export default function Avatar({ pose = "idle", mouse, ...props }) {
     // head follows the cursor a little
     const mx = mouse?.current.x ?? 0;
     const my = mouse?.current.y ?? 0;
-    const k = Math.min(1, dt * 4);
     head.current.rotation.y += (mx * 0.45 - head.current.rotation.y) * k;
     head.current.rotation.x += (-my * 0.2 + (pose === "type" ? 0.25 : 0) - head.current.rotation.x) * k;
 
@@ -75,9 +103,12 @@ export default function Avatar({ pose = "idle", mouse, ...props }) {
   return (
     <group {...props}>
       <group ref={body}>
-        {/* legs */}
-        {[-0.15, 0.15].map((x) => (
-          <group key={x} position={[x, 0.64, 0]}>
+        {/* legs (pivot at the hip) */}
+        {[
+          [-0.15, legL],
+          [0.15, legR],
+        ].map(([x, ref]) => (
+          <group key={x} ref={ref} position={[x, 0.64, 0]}>
             <Box s={[0.24, 0.52, 0.26]} p={[0, -0.26, 0]} c={JEANS} />
             <Box s={[0.27, 0.14, 0.38]} p={[0, -0.56, 0.05]} c="#1f2937" />
           </group>
