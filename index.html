@@ -46,6 +46,16 @@
       "jobTitle": "Cybersecurity Enthusiast & Developer"
     }
     </script>
+    <meta name="theme-color" content="#fafaf9" />
+    <!-- pick light/dark before the page paints, so night visitors don't get a white flash (src/site/theme.js takes over after) -->
+    <script>
+      (function () {
+        var q = new URLSearchParams(location.search).get("theme");
+        var h = new Date().getHours() + new Date().getMinutes() / 60;
+        var night = q ? q === "night" : h < 5.5 || h >= 19;
+        document.documentElement.dataset.theme = night ? "dark" : "light";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

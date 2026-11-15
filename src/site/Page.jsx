@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { FaGithub, FaLinkedin, FaEnvelope, FaArrowUp, FaBars, FaTimes } from "react-icons/fa";
+import { FaGithub, FaLinkedin, FaEnvelope, FaArrowUp, FaBars, FaTimes, FaVolumeUp, FaVolumeMute } from "react-icons/fa";
+import { toggleSound, useSoundOn } from "./sound";
 import { profile } from "../data/projectsData";
 import Journey from "./Journey";
 import { ScrollProgress, SectionDots } from "./ui";
@@ -20,6 +21,26 @@ const SOCIALS = [
 ];
 
 const FIRST = profile.name.split(" ")[0];
+
+// 🔊 jungle + footsteps (sound.js). Browsers need a click before any audio can play.
+function SoundButton() {
+  const on = useSoundOn();
+  return (
+    <button
+      data-sound-toggle
+      onClick={toggleSound}
+      aria-pressed={on}
+      aria-label={on ? "Turn sound off" : "Turn on jungle sounds"}
+      title={on ? "Sound on" : "Sound off"}
+      className={`relative grid place-items-center w-10 h-10 rounded-full transition ${
+        on ? "text-emerald-600 bg-emerald-50" : "text-stone-500 hover:text-stone-900 hover:bg-stone-900/5"
+      }`}
+    >
+      {on ? <FaVolumeUp /> : <FaVolumeMute />}
+      {on && <span aria-hidden className="absolute inset-0 rounded-full ring-2 ring-emerald-400/40 animate-ping" style={{ animationDuration: "2.4s" }} />}
+    </button>
+  );
+}
 
 function Nav() {
   const active = useActiveSection();
@@ -59,6 +80,8 @@ function Nav() {
             </li>
           ))}
         </ul>
+        <div className="flex items-center gap-1 md:gap-2">
+        <SoundButton />
         <a
           href="#contact"
           className="hidden md:inline-flex items-center gap-2 h-9 px-4 rounded-full bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 shadow-[0_6px_20px_-6px_rgba(16,185,129,0.7)] transition"
@@ -73,6 +96,7 @@ function Nav() {
         >
           {open ? <FaTimes /> : <FaBars />}
         </button>
+        </div>
       </nav>
       {open && (
         <ul className="md:hidden px-5 pb-4 space-y-1">

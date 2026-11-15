@@ -1,22 +1,30 @@
 import * as THREE from "three";
 
-// Time of day along the walk: morning → midday → golden hour → dusk.
-// sky = page background + fog, sun = sunlight colour, power = sunlight strength.
-const KEYS = [
-  { s: 0.0, sky: "#fdf5ea", sun: "#ffd9a8", power: 1.5 },
-  { s: 0.35, sky: "#f5f8f6", sun: "#ffffff", power: 1.8 },
-  { s: 0.7, sky: "#fbeedb", sun: "#ffc27a", power: 1.6 },
-  { s: 1.0, sky: "#eee9f7", sun: "#ff9fb4", power: 1.25 },
-].map((k) => ({ ...k, skyC: new THREE.Color(k.sky), sunC: new THREE.Color(k.sun) }));
+// How the 3D world looks at each time of day (see PHASES in theme.js).
+// sky = fog colour (matches the page background), sun = sunlight / moonlight.
+const LOOKS = {
+  morning: { sky: "#fdf3e4", sun: "#ffd9a8", power: 1.5, ambient: 0.5, hemiSky: "#ffffff", hemiGround: "#e7e5e4", hemi: 0.7, ground: "#efe9df", path: "#ffffff" },
+  day: { sky: "#f4f8f6", sun: "#ffffff", power: 1.8, ambient: 0.5, hemiSky: "#ffffff", hemiGround: "#e7e5e4", hemi: 0.7, ground: "#ece9e2", path: "#ffffff" },
+  evening: { sky: "#fbe8d6", sun: "#ffb36b", power: 1.5, ambient: 0.42, hemiSky: "#ffe6cc", hemiGround: "#d9c7b8", hemi: 0.6, ground: "#eadfd2", path: "#fff6ec" },
+  night: { sky: "#0d1322", sun: "#9db4ff", power: 0.6, ambient: 0.2, hemiSky: "#4a5d99", hemiGround: "#10141f", hemi: 0.5, ground: "#1b2131", path: "#394159" },
+};
 
-export function skyAt(s, out = { sky: new THREE.Color(), sun: new THREE.Color(), power: 1.6 }) {
-  let i = 0;
-  while (i < KEYS.length - 2 && s > KEYS[i + 1].s) i++;
-  const a = KEYS[i];
-  const b = KEYS[i + 1];
-  const f = THREE.MathUtils.clamp((s - a.s) / (b.s - a.s), 0, 1);
-  out.sky.copy(a.skyC).lerp(b.skyC, f);
-  out.sun.copy(a.sunC).lerp(b.sunC, f);
-  out.power = a.power + (b.power - a.power) * f;
-  return out;
+const COLOR_KEYS = ["sky", "sun", "hemiSky", "hemiGround", "ground", "path"];
+const NUM_KEYS = ["power", "ambient", "hemi"];
+
+const TARGETS = Object.fromEntries(
+  Object.entries(LOOKS).map(([k, v]) => [k, { ...v, ...Object.fromEntries(COLOR_KEYS.map((c) => [c, new THREE.Color(v[c])])) }])
+);
+
+export function makeLook(phase) {
+  const t = TARGETS[phase];
+  return { ...t, ...Object.fromEntries(COLOR_KEYS.map((c) => [c, t[c].clone()])) };
+}
+
+// ease `look` towards the phase's look (k = 0..1 per frame) so changes fade in smoothly
+export function stepLook(look, phase, k) {
+  const t = TARGETS[phase];
+  COLOR_KEYS.forEach((c) => look[c].lerp(t[c], k));
+  NUM_KEYS.forEach((n) => (look[n] += (t[n] - look[n]) * k));
+  return look;
 }
