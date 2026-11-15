@@ -90,9 +90,9 @@ export default function ProjectsSection() {
   }
 
   return (
-    <div className="p-5 sm:p-7 space-y-4">
+    <div className="space-y-4">
       {/* toolbar */}
-      <div className="flex flex-col sm:flex-row gap-2.5">
+      <div className="flex flex-col gap-2.5">
         <label className="relative flex-1">
           <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
           <input
@@ -100,7 +100,7 @@ export default function ProjectsSection() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search projects…"
             aria-label="Search projects"
-            className="w-full h-10 pl-10 pr-3 rounded-xl bg-slate-100 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-fuchsia-300 select-text"
+            className="w-full h-10 pl-10 pr-3 rounded-xl bg-white border border-stone-200 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-emerald-300 select-text"
           />
         </label>
         <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
@@ -134,14 +134,14 @@ export default function ProjectsSection() {
               href={r.html_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col gap-2 p-4 rounded-2xl border border-slate-200 bg-white hover:border-fuchsia-300 hover:shadow-lg hover:-translate-y-0.5 transition"
+              className="spot group flex flex-col gap-2 p-4 rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-lg hover:-translate-y-0.5 transition"
             >
               <div className="flex items-start gap-2">
-                <span className="grid place-items-center w-8 h-8 rounded-lg bg-fuchsia-50 text-fuchsia-600 shrink-0">
+                <span className="grid place-items-center w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
                   <FaGithub />
                 </span>
                 <h4 className="font-semibold text-slate-900 leading-tight break-all pt-1.5">{r.name}</h4>
-                <FaExternalLinkAlt className="ml-auto mt-2 text-xs text-slate-300 group-hover:text-fuchsia-500 shrink-0" />
+                <FaExternalLinkAlt className="ml-auto mt-2 text-xs text-slate-300 group-hover:text-emerald-500 shrink-0" />
               </div>
               <p className={`text-sm leading-snug line-clamp-2 min-h-[2lh] ${r.description ? "text-slate-600" : "text-slate-400 italic"}`}>
                 {r.description || "No description yet"}

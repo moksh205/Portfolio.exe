@@ -1,24 +1,17 @@
-import { lazy, Suspense, useCallback, useState } from "react";
-import BootScreen from "./components/BootScreen";
+import { lazy, Suspense } from "react";
+import Page from "./site/Page";
 
-// The 3D world is a big chunk (three.js) — start loading it while the boot screen runs
-const loadWorld = () => import("./iso/IsoWorld");
-const IsoWorld = lazy(loadWorld);
-loadWorld();
+// three.js is a big chunk: the page renders straight away and the 3D scene fades in once loaded
+const Scene = lazy(() => import("./site/Scene"));
 
 export default function App() {
-  const [booting, setBooting] = useState(true);
-  const finishBoot = useCallback(() => setBooting(false), []);
-
   return (
-    <div className={`${booting ? "crt " : ""}w-full h-dvh bg-black`}>
-      {booting ? (
-        <BootScreen onDone={finishBoot} />
-      ) : (
-        <Suspense fallback={<div className="h-full grid place-items-center font-mono text-green-400">loading island…</div>}>
-          <IsoWorld />
-        </Suspense>
-      )}
-    </div>
+    <>
+      <div aria-hidden className="page-bg" />
+      <Suspense fallback={null}>
+        <Scene />
+      </Suspense>
+      <Page />
+    </>
   );
 }

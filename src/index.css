@@ -1,56 +1,31 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-html, body {
-  overflow: clip;
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
 }
 body {
-  background-color: #000;
-  user-select: none;
-  font-family: var(--font-mono);
+  background-color: #fafaf9;
+  color: #1c1917;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- boot screen: CRT scanlines + soft flicker ---------- */
-.crt::before {
-  content: "";
+/* soft colour washes behind everything */
+.page-bg {
   position: fixed;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0px,
-    rgba(0, 0, 0, 0) 2px,
-    rgba(0, 0, 0, 0.1) 3px
-  );
-}
-.crt::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background: rgba(0, 255, 100, 0.02);
-  animation: flicker 4s infinite steps(1);
-}
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  47% { opacity: 0.6; }
-  48% { opacity: 1; }
-  82% { opacity: 0.8; }
-}
-.glow {
-  text-shadow: 0 0 6px rgba(0, 255, 100, 0.55);
-}
-@keyframes blink {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
-}
-.animate-blink {
-  animation: blink 1s steps(1) infinite;
+  background:
+    radial-gradient(40rem 30rem at 85% 10%, rgba(16, 185, 129, 0.08), transparent 70%),
+    radial-gradient(36rem 28rem at 10% 70%, rgba(56, 189, 248, 0.07), transparent 70%),
+    #fafaf9;
 }
 
 /* ---------- scrollbars ---------- */
@@ -63,64 +38,92 @@ body {
 }
 .thin-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+  scrollbar-color: rgba(120, 113, 108, 0.4) transparent;
 }
 
-/* ---------- island ---------- */
-.iso-sky {
-  background: linear-gradient(180deg, #1c1f4f 0%, #4b3a7e 38%, #a2569a 68%, #f0927a 100%);
-}
-.stars {
+/* faint grid behind the hero area */
+.page-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background-image:
-    radial-gradient(1px 1px at 20px 30px, #fff, transparent),
-    radial-gradient(1px 1px at 120px 80px, #cdb8ff, transparent),
-    radial-gradient(1.5px 1.5px at 200px 20px, #fff, transparent),
-    radial-gradient(1px 1px at 260px 140px, #fff, transparent),
-    radial-gradient(1px 1px at 340px 60px, #9ef, transparent),
-    radial-gradient(1.5px 1.5px at 60px 170px, #fff, transparent);
-  background-size: 380px 220px;
-  mask-image: linear-gradient(#000 0%, transparent 65%);
-  animation: twinkle 5s ease-in-out infinite alternate;
-}
-@keyframes twinkle {
-  from { opacity: 0.55; }
-  to { opacity: 1; }
+    linear-gradient(rgba(28, 25, 23, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 25, 23, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 20%, transparent 75%);
 }
 
-/* "press E" prompt and ENTER button */
-.prompt-bob {
-  animation: bob 0.9s ease-in-out infinite;
-}
-@keyframes bob {
-  50% { transform: translateY(-5px); }
-}
-
-/* speech bubble */
-.bubble-pop {
-  animation: pop 0.22s cubic-bezier(0.3, 1.6, 0.6, 1) both;
-  transform-origin: bottom center;
-}
-@keyframes pop {
-  from { transform: scale(0.6); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+/* emerald → sky gradient text */
+.text-gradient {
+  background: linear-gradient(100deg, #10b981 10%, #0ea5e9 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* section panel: backdrop fades, card slides up like a sheet */
-.panel-fade {
-  animation: fade 0.18s ease-out both;
+/* scroll-in reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--d, 0ms);
 }
-@keyframes fade {
-  from { opacity: 0; }
+.reveal-in {
+  opacity: 1;
+  transform: none;
 }
-.sheet-up {
-  animation: sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.05) both;
+
+/* typewriter caret */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.12em;
+  background: #10b981;
+  animation: caret 1s steps(1) infinite;
 }
-@keyframes sheet-up {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes caret {
+  50% { opacity: 0; }
+}
+
+/* endless skills strip */
+.marquee {
+  animation: marquee 32s linear infinite;
+}
+.marquee-mask:hover .marquee {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+/* cursor spotlight on cards */
+.spot {
+  position: relative;
+  isolation: isolate;
+}
+.spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(16, 185, 129, 0.13), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.spot:hover::before {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .crt::after, .stars, .prompt-bob, .bubble-pop, .panel-fade, .sheet-up { animation: none; }
-  *, *::before, *::after { transition-duration: 0.01ms !important; }
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; }
+  .marquee, .caret { animation: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
