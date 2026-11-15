@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FaGithub, FaStar, FaCodeBranch, FaSearch, FaExternalLinkAlt, FaGlobe } from "react-icons/fa";
 import { profile } from "../../data/projectsData";
 
-const CACHE_KEY = "gh-repos-v3";
+const CACHE_KEY = "gh-repos-v4";
 const CACHE_MS = 30 * 60 * 1000; // GitHub allows 60 unauthenticated calls/hour
 
 const LANG_COLORS = {
@@ -30,6 +30,60 @@ function liveUrl(r) {
 
 const prettyHost = (url) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
+// Live screenshot from microlink (free; used when no saved shot exists, e.g. a brand-new project)
+const liveShot = (site) =>
+  "https://api.microlink.io/?" +
+  new URLSearchParams({
+    url: site, screenshot: "true", meta: "false", embed: "screenshot.url",
+    "viewport.width": "1280", "viewport.height": "800", "viewport.deviceScaleFactor": "0.5",
+    "screenshot.type": "jpeg", waitForTimeout: "1500",
+  });
+
+// Picture of the live site, clickable. Tries the saved shot (npm run shots), then a live one, then a placeholder.
+function SiteShot({ name, site }) {
+  const sources = useMemo(() => [`/projects/${encodeURIComponent(name)}.jpg`, liveShot(site)], [name, site]);
+  const [i, setI] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const failed = i >= sources.length;
+  return (
+    <a
+      href={site}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Open ${name} live site (${prettyHost(site)})`}
+      className="relative block -mx-4 -mt-4 mb-1 aspect-[16/10] overflow-hidden border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-sky-50"
+    >
+      {!failed && (
+        <img
+          key={sources[i]}
+          src={sources[i]}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setLoaded(false);
+            setI((n) => n + 1);
+          }}
+          className={`w-full h-full object-cover object-top transition duration-500 group-hover:scale-[1.03] ${loaded ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+      {!loaded &&
+        (failed ? (
+          <span className="absolute inset-0 grid place-items-center text-emerald-700/70 text-sm font-medium">
+            <span className="flex items-center gap-2"><FaGlobe /> {prettyHost(site)}</span>
+          </span>
+        ) : (
+          <span className="absolute inset-0 animate-pulse bg-white/40" />
+        ))}
+      <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-t from-stone-900/75 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition">
+        <span className="truncate">{prettyHost(site)}</span>
+        <FaExternalLinkAlt className="shrink-0 text-[10px]" />
+      </span>
+    </a>
+  );
+}
+
 function ago(date) {
   const days = Math.floor((Date.now() - new Date(date)) / 86400000);
   if (days < 1) return "today";
@@ -51,7 +105,8 @@ function useRepos() {
       })
       .then((data) => {
         const list = data
-          .filter((r) => !r.fork)
+          // skip forks and the profile-README repo (named after the user)
+          .filter((r) => !r.fork && r.name.toLowerCase() !== profile.githubUser.toLowerCase())
           .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
           .map((r) => ({
             id: r.id, name: r.name, description: r.description, language: r.language,
@@ -170,8 +225,9 @@ export default function ProjectsSection() {
           {shown.map((r) => (
             <div
               key={r.id}
-              className="spot group flex flex-col gap-2 p-4 rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-lg hover:-translate-y-0.5 transition"
+              className="spot group flex flex-col gap-2 p-4 rounded-2xl overflow-hidden border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-lg hover:-translate-y-0.5 transition"
             >
+              {r.live && <SiteShot name={r.name} site={r.live} />}
               <div className="flex items-start gap-2">
                 <span className="grid place-items-center w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
                   {r.live ? <FaGlobe /> : <FaGithub />}
@@ -198,23 +254,12 @@ export default function ProjectsSection() {
                 <span className="ml-auto">{ago(r.pushed_at)}</span>
               </div>
               <div className="flex gap-2 mt-auto pt-1">
-                {r.live && (
-                  <a
-                    href={r.live}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={prettyHost(r.live)}
-                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-emerald-600 transition"
-                  >
-                    Visit site <FaExternalLinkAlt className="text-[10px]" />
-                  </a>
-                )}
                 <a
                   href={r.html_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${r.name} code on GitHub`}
-                  className={`inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-stone-200 text-stone-700 text-xs font-medium hover:border-stone-900 transition ${r.live ? "" : "flex-1"}`}
+                  className={`inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-stone-200 text-stone-700 text-xs font-medium hover:border-stone-900 transition flex-1`}
                 >
                   <FaGithub /> Code
                 </a>
