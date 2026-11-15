@@ -11,9 +11,50 @@ html {
 }
 body {
   background-color: var(--sky, #fafaf9);
-  color: #1c1917;
+  color: var(--color-stone-900);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 1.2s ease, color 0.6s ease;
+}
+
+/* ---------- night theme ----------
+   The whole site is built from Tailwind's stone / slate / white colours, so at night we
+   swap those colour values: light surfaces turn dark and dark text turns light. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --sky: #0d1322;
+  --color-white: #171c28;
+  --color-stone-50: #1a1f2b;
+  --color-stone-100: #222837;
+  --color-stone-200: #2f3646;
+  --color-stone-300: #434b5d;
+  --color-stone-400: #7c8496;
+  --color-stone-500: #a2a9b8;
+  --color-stone-600: #c0c6d2;
+  --color-stone-700: #d4d9e2;
+  --color-stone-800: #e6e9ef;
+  --color-stone-900: #f3f5f8;
+  --color-stone-950: #fafbfc;
+  --color-slate-50: #1a1f2b;
+  --color-slate-100: #222837;
+  --color-slate-200: #2f3646;
+  --color-slate-300: #434b5d;
+  --color-slate-400: #7c8496;
+  --color-slate-500: #a2a9b8;
+  --color-slate-600: #c0c6d2;
+  --color-slate-700: #d4d9e2;
+  --color-slate-800: #e6e9ef;
+  --color-slate-900: #f3f5f8;
+  --color-emerald-50: #0f2d26;
+  --color-emerald-100: #134236;
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-sky-50: #10263a;
+}
+:root[data-theme="dark"] .page-bg::after {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
 }
 
 /* soft colour washes behind everything */

@@ -15,19 +15,8 @@ function liveUrl(r) {
   return null;
 }
 
-export const shotUrl = (site) =>
-  "https://api.microlink.io/?" +
-  new URLSearchParams({
-    url: site,
-    screenshot: "true",
-    meta: "false",
-    embed: "screenshot.url",
-    "viewport.width": "1280",
-    "viewport.height": "800",
-    "viewport.deviceScaleFactor": "0.5",
-    "screenshot.type": "jpeg",
-    waitForTimeout: "1500",
-  });
+// 11ty's free screenshot service (no key, no daily limit); 1200×630 jpeg
+export const shotUrl = (site) => `https://v1.screenshot.11ty.dev/${encodeURIComponent(site)}/opengraph/`;
 
 const repos = await (await fetch(`https://api.github.com/users/${USER}/repos?per_page=100`)).json();
 const live = repos
@@ -45,12 +34,12 @@ for (const { name, site } of live) {
   }
   try {
     let res;
-    // the free API allows a few calls at a time: back off and retry when it says "too many"
+    // retry a few times if the service is slow or busy
     for (let attempt = 0; attempt < 5; attempt++) {
       res = await fetch(shotUrl(site));
-      if (res.status !== 429) break;
-      const pause = (Number(res.headers.get("retry-after")) || 15 * (attempt + 1)) * 1000;
-      process.stdout.write(`(busy, waiting ${pause / 1000}s) `);
+      if (res.ok) break;
+      const pause = 10000 * (attempt + 1);
+      process.stdout.write(`(retrying in ${pause / 1000}s) `);
       await wait(pause);
     }
     if (!res.ok || !(res.headers.get("content-type") || "").startsWith("image/")) throw new Error(`HTTP ${res.status}`);
@@ -60,5 +49,5 @@ for (const { name, site } of live) {
   } catch (e) {
     console.log(`failed: ${e.message}`);
   }
-  await wait(4000);
+  await wait(1000);
 }

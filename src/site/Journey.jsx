@@ -6,6 +6,7 @@ import { SkillsSection, ExperienceSection, ContactSection } from "./sections/Sec
 import { Typewriter, SkillMarquee } from "./ui";
 import { SECTION_IDS } from "./sections";
 import { journey, journeyAt, anchorVh, TOTAL, VH_PER_UNIT } from "./timeline";
+import { PHASES, useTheme } from "./theme";
 
 const ROLES = profile.role.split("|").map((s) => s.trim());
 const [FIRST, ...REST] = profile.name.split(" ");
@@ -36,13 +37,14 @@ function Heading({ eyebrow, title, intro }) {
 }
 
 function HeroCard() {
+  const { phase } = useTheme();
   return (
     <div>
       <p className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-white border border-stone-200 text-sm text-stone-600 mb-5 shadow-sm">
         <span className="grid place-items-center w-5 h-5 rounded-full bg-emerald-100">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
         </span>
-        Hello there 👋
+        {PHASES[phase].label} {PHASES[phase].icon}
       </p>
       <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight text-stone-900 leading-[1.02]">
         I'm {FIRST}

@@ -1,17 +1,21 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Sparkles } from "@react-three/drei";
+import { Sparkles, Stars } from "@react-three/drei";
 import * as THREE from "three";
 import Avatar from "./models/Avatar";
 import GLBAvatar, { AvatarBoundary } from "./models/GLBAvatar";
 import { Padlock, Laptop, SkillOrbit, ServerRack, Stairs, Mail, ACCENT } from "./models/Props";
 import { PATH, frameAt } from "./path";
 import { STOP_U, STOPS, journey, journeyAt, AVATAR_URL } from "./timeline";
-import { skyAt } from "./sky";
+import { makeLook, stepLook } from "./sky";
 import { SECTION_IDS } from "./sections";
+import { getTheme, useTheme } from "./theme";
+import { footstep } from "./sound";
 
-const BG = "#fafaf9";
-const GROUND = "#efece6";
+// Phones / small or low-power devices get a lighter scene (fewer objects, lower resolution, softer shadows)
+const LITE =
+  typeof window !== "undefined" &&
+  (window.matchMedia("(max-width: 767px), (pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4);
 
 function rng(seed) {
   return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
@@ -37,16 +41,20 @@ const propSpot = (i) => {
 const propTurn = (i) => Math.atan2(STOP_FRAMES[i].r.x, STOP_FRAMES[i].r.z); // face the camera side
 
 // ---------- ground + path ----------
-function Ground() {
+function Ground({ look }) {
+  const mat = useRef();
+  useFrame(() => mat.current.color.copy(look.ground));
   return (
     <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, -24]} receiveShadow>
       <circleGeometry args={[90, 64]} />
-      <meshStandardMaterial color={GROUND} roughness={1} />
+      <meshStandardMaterial ref={mat} color={look.ground} roughness={1} />
     </mesh>
   );
 }
 
-function PathRibbon() {
+function PathRibbon({ look }) {
+  const mat = useRef();
+  useFrame(() => mat.current.color.copy(look.path));
   const geo = useMemo(() => {
     const pts = PATH.getSpacedPoints(400);
     const pos = [];
@@ -70,7 +78,7 @@ function PathRibbon() {
   }, []);
   return (
     <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial color="#ffffff" roughness={0.9} side={THREE.DoubleSide} />
+      <meshStandardMaterial ref={mat} color={look.path} roughness={0.9} side={THREE.DoubleSide} />
     </mesh>
   );
 }
@@ -121,7 +129,7 @@ function Scenery() {
     const props = STOP_U.map((_, i) => propSpot(i));
     const out = [];
     let tries = 0;
-    while (out.length < 90 && tries++ < 3000) {
+    while (out.length < (LITE ? 45 : 90) && tries++ < 3000) {
       const x = (r() * 2 - 1) * 26;
       const z = 6 - r() * 62;
       if (distToPath(x, z) < 3.2 || blocksCamera(x, z)) continue;
@@ -294,6 +302,8 @@ function useHasAvatarFile() {
 function Walker({ walker, mouse }) {
   const root = useRef();
   const motion = useRef({ speed: 0 });
+  const stepDist = useRef(0.6);
+  const stepSide = useRef(0);
   const frame = useRef({});
   const [pose, setPose] = useState("wave");
   const poseRef = useRef("wave");
@@ -324,6 +334,16 @@ function Walker({ walker, mouse }) {
     const f = frameAt(w.u, frame.current);
 
     motion.current.speed = Math.abs(w.vel);
+
+    // footstep sounds: one every ~0.9 units walked (matches his stride), alternating feet
+    if (motion.current.speed > 0.3) {
+      stepDist.current += motion.current.speed * dt;
+      if (stepDist.current > 0.9) {
+        stepDist.current = 0;
+        stepSide.current ^= 1;
+        footstep(stepSide.current, motion.current.speed);
+      }
+    } else stepDist.current = 0.6; // first step comes quickly when he sets off
     w.speed = motion.current.speed;
 
     // tell the page when he has actually reached a stop, so its card shows on arrival
@@ -369,21 +389,21 @@ function Walker({ walker, mouse }) {
 }
 
 // ---------- camera + light follow him ----------
-function Follow({ walker }) {
+function Follow({ walker, sky }) {
   const { camera, size, scene } = useThree();
   const light = useRef();
+  const ambient = useRef();
+  const hemi = useRef();
   const frame = useRef({});
   const look = useRef(new THREE.Vector3(0, 1, 0));
   const pos = useRef(new THREE.Vector3(9, 6, 4));
   const tmp = useMemo(() => ({ goal: new THREE.Vector3(), lk: new THREE.Vector3(), left: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) }), []);
   const mobile = size.width < 768;
-  const sky = useMemo(() => skyAt(0), []);
-  const lastHex = useRef("");
 
   useEffect(() => {
-    scene.fog = new THREE.Fog(BG, 26, 62);
+    scene.fog = new THREE.Fog(sky.sky, 26, 62);
     return () => (scene.fog = null);
-  }, [scene]);
+  }, [scene, sky]);
 
   useFrame((_, dt) => {
     const { p, t, r } = frameAt(walker.current.u, frame.current);
@@ -406,24 +426,26 @@ function Follow({ walker }) {
     light.current.target.position.copy(p);
     light.current.target.updateMatrixWorld();
 
-    // time of day follows the walk: fog + sunlight in 3D, and the page background behind it
-    skyAt(walker.current.u, sky);
+    // real time of day (theme.js): fade fog + sun/moon light towards the current look
+    stepLook(sky, getTheme().phase, Math.min(1, dt * 1.5));
     scene.fog.color.copy(sky.sky);
     light.current.color.copy(sky.sun);
     light.current.intensity = sky.power;
-    const hex = `#${sky.sky.getHexString()}`;
-    if (hex !== lastHex.current) {
-      lastHex.current = hex;
-      document.documentElement.style.setProperty("--sky", hex);
-    }
+    ambient.current.intensity = sky.ambient;
+    hemi.current.color.copy(sky.hemiSky);
+    hemi.current.groundColor.copy(sky.hemiGround);
+    hemi.current.intensity = sky.hemi;
   });
 
   return (
+    <>
+    <ambientLight ref={ambient} intensity={sky.ambient} />
+    <hemisphereLight ref={hemi} args={[sky.hemiSky, sky.hemiGround, sky.hemi]} />
     <directionalLight
       ref={light}
       intensity={1.7}
       castShadow
-      shadow-mapSize={[2048, 2048]}
+      shadow-mapSize={LITE ? [1024, 1024] : [2048, 2048]}
       shadow-bias={-0.0005}
       shadow-camera-left={-14}
       shadow-camera-right={14}
@@ -431,13 +453,66 @@ function Follow({ walker }) {
       shadow-camera-bottom={-14}
       shadow-camera-far={50}
     />
+    </>
   );
+}
+
+// ---------- festival touches in the 3D world ----------
+const SPARKLE_COLORS = {
+  diwali: "#fbbf24",
+  holi: "#f472b6",
+  christmas: "#ffffff",
+  newyear: "#fde68a",
+  republic: "#fb923c",
+  independence: "#fb923c",
+};
+
+// Diwali: little clay diyas with flickering flames lining both edges of the path
+const DIYAS = (() => {
+  const out = [];
+  const n = LITE ? 24 : 46;
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const { p, r } = frameAt(u, {});
+    [-1, 1].forEach((side) => out.push([p.x + r.x * 1.45 * side, 0, p.z + r.z * 1.45 * side]));
+  }
+  return out;
+})();
+
+function Diyas() {
+  const flames = useRef([]);
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    flames.current.forEach((f, i) => {
+      if (!f) return;
+      const k = 1 + Math.sin(t * 9 + i * 1.7) * 0.12 + Math.sin(t * 23 + i) * 0.06;
+      f.scale.set(1, k, 1);
+    });
+  });
+  return DIYAS.map((pos, i) => (
+    <group key={i} position={pos}>
+      <mesh position={[0, 0.06, 0]}>
+        <cylinderGeometry args={[0.14, 0.08, 0.1, 10]} />
+        <meshStandardMaterial color="#b45309" roughness={0.8} />
+      </mesh>
+      <mesh ref={(el) => (flames.current[i] = el)} position={[0, 0.17, 0]}>
+        <coneGeometry args={[0.045, 0.16, 8]} />
+        <meshBasicMaterial color="#ffb703" toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0.17, 0]}>
+        <sphereGeometry args={[0.13, 10, 8]} />
+        <meshBasicMaterial color="#ffb347" transparent opacity={0.22} depthWrite={false} toneMapped={false} />
+      </mesh>
+    </group>
+  ));
 }
 
 export default function World() {
   const mouse = useRef({ x: 0, y: 0 });
   const walker = useRef({ u: 0, vel: 0, speed: 0 });
   const [ready, setReady] = useState(false);
+  const { dark, festival } = useTheme();
+  const sky = useMemo(() => makeLook(getTheme().phase), []); // eased towards the current time of day each frame
 
   useEffect(() => {
     const onMove = (e) => {
@@ -452,23 +527,23 @@ export default function World() {
     <div aria-hidden className={`fixed inset-0 z-0 pointer-events-none transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}>
       <Canvas
         shadows
-        dpr={[1, 1.75]}
+        dpr={LITE ? [1, 1.25] : [1, 1.75]}
         camera={{ position: [9, 6, 4], fov: 40, near: 0.1, far: 120 }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: !LITE, alpha: true, powerPreference: "high-performance" }}
         onCreated={() => setReady(true)}
       >
-        <ambientLight intensity={0.5} />
-        <hemisphereLight args={["#ffffff", "#e7e5e4", 0.7]} />
-        <Follow walker={walker} />
-        <Ground />
-        <PathRibbon />
+        <Follow walker={walker} sky={sky} />
+        <Ground look={sky} />
+        <PathRibbon look={sky} />
+        {dark && <Stars radius={70} depth={25} count={LITE ? 700 : 1800} factor={3.2} saturation={0} fade speed={0.6} />}
+        {festival === "diwali" && <Diyas />}
         <StopMarkers />
         <Scenery />
         <Stops />
         <Signposts />
         <Walker walker={walker} mouse={mouse} />
         <Dust walker={walker} />
-        <Sparkles count={70} scale={[50, 6, 60]} position={[0, 3, -24]} size={3} speed={0.25} opacity={0.5} color={ACCENT} />
+        <Sparkles count={LITE ? 30 : 70} scale={[50, 6, 60]} position={[0, 3, -24]} size={3} speed={0.25} opacity={dark ? 0.8 : 0.5} color={SPARKLE_COLORS[festival] ?? (dark ? "#a7f3d0" : ACCENT)} />
       </Canvas>
     </div>
   );

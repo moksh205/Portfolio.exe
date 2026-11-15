@@ -30,7 +30,8 @@ function liveUrl(r) {
 
 const prettyHost = (url) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
-// Live screenshot from microlink (free; used when no saved shot exists, e.g. a brand-new project)
+// Live screenshots for projects with no saved shot (e.g. brand-new ones): 11ty first, microlink as a backup
+const elevntyShot = (site) => `https://v1.screenshot.11ty.dev/${encodeURIComponent(site)}/opengraph/`;
 const liveShot = (site) =>
   "https://api.microlink.io/?" +
   new URLSearchParams({
@@ -41,7 +42,7 @@ const liveShot = (site) =>
 
 // Picture of the live site, clickable. Tries the saved shot (npm run shots), then a live one, then a placeholder.
 function SiteShot({ name, site }) {
-  const sources = useMemo(() => [`/projects/${encodeURIComponent(name)}.jpg`, liveShot(site)], [name, site]);
+  const sources = useMemo(() => [`/projects/${encodeURIComponent(name)}.jpg`, elevntyShot(site), liveShot(site)], [name, site]);
   const [i, setI] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const failed = i >= sources.length;
@@ -51,7 +52,7 @@ function SiteShot({ name, site }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Open ${name} live site (${prettyHost(site)})`}
-      className="relative block -mx-4 -mt-4 mb-1 aspect-[16/10] overflow-hidden border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-sky-50"
+      className="relative block -mx-4 -mt-4 mb-1 aspect-[40/21] overflow-hidden border-b border-slate-200 bg-gradient-to-br from-emerald-50 to-sky-50"
     >
       {!failed && (
         <img

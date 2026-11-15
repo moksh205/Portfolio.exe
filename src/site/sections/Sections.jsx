@@ -75,7 +75,7 @@ export function ContactSection() {
   const links = [
     { label: "Email", value: profile.email, href: `mailto:${profile.email}`, icon: FaEnvelope, color: "#10b981" },
     { label: "LinkedIn", value: "Moksh Gupta", href: profile.linkedin, icon: FaLinkedin, color: "#0a66c2" },
-    { label: "GitHub", value: `@${profile.githubUser}`, href: profile.github, icon: FaGithub, color: "#0f172a" },
+    { label: "GitHub", value: `@${profile.githubUser}`, href: profile.github, icon: FaGithub, color: "var(--color-slate-900)" },
   ];
   return (
     <div className="space-y-3">
